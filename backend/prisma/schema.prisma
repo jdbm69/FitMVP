@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Member {
+  id          String       @id @default(uuid())
+  firstName   String
+  lastName    String
+  email       String       @unique
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships Membership[]
+  checkIns    CheckIn[]
+
+  @@index([lastName, firstName])
+}
+
+model Plan {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  priceCents  Int
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships Membership[]
+}
+
+model Membership {
+  id          String    @id @default(uuid())
+  memberId    String
+  planId      String
+  startsAt    DateTime
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  member      Member    @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  plan        Plan      @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  @@index([memberId, startsAt])
+  @@index([memberId, cancelledAt])
+}
+
+model CheckIn {
+  id        String   @id @default(uuid())
+  memberId  String
+  createdAt DateTime @default(now())
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Restrict)
+
+  @@index([memberId, createdAt])
+}
